@@ -1,7 +1,7 @@
 {
   "name": "Entry Publink",
   "description": "엔트리 작품을 링크가 있는 사용자가 볼 수 있게 만들어줍니다.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "manifest_version": 3,
   "icons": {
     "16": "icons/16.png",
