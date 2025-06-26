@@ -48,7 +48,7 @@ async function request(queryName: string, query: string, variables: any): Promis
   return fetch('https://playentry.org/graphql/' + queryName, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ query: query.trim().replace(/(?<=\()\s*|\s*(?=\))|(?<={)\s*|\s*(?=})|\s*(?={)|(?<=\))\s*(?={)|(?<=:)\s*|(?<=,)\s*/g, '').replace(/\n\s*/g, ','), variables }),
+    body: JSON.stringify({ query, variables }),
   }).then(v => v.json())
 }
 
@@ -57,34 +57,7 @@ async function request(queryName: string, query: string, variables: any): Promis
  * @param id 작품의 id입니다.
  */
 async function createLecture(id: string) {
-  const { data } = await request('CREATE_LECTURE', `
-    mutation CREATE_LECTURE(
-      $title: String
-      $categoryCode: String
-      $description: String
-      $goals: [String]
-      $difficulty: Int
-      $requiredTime: Int
-      $studies: [JSON]
-      $groupId: ID
-      $isOpen: Boolean
-    ) {
-      createLecture(
-        title: $title
-        categoryCode: $categoryCode
-        description: $description
-        goals: $goals
-        difficulty: $difficulty
-        requiredTime: $requiredTime
-        studies: $studies
-        groupId: $groupId
-        isOpen: $isOpen
-      ) {
-        status
-        result
-      }
-    }
-  `, {
+  const { data } = await request('CREATE_LECTURE', 'mutation CREATE_LECTURE($title:String,$categoryCode:String,$description:String,$goals:[String],$difficulty:Int,$requiredTime:Int,$studies:[JSON],$groupId:ID,$isOpen:Boolean){createLecture(title:$title,categoryCode:$categoryCode,description:$description,goals:$goals,difficulty:$difficulty,requiredTime:$requiredTime,studies:$studies,groupId:$groupId,isOpen:$isOpen){status,result}}', {
     title: ' ',
     categoryCode: 'etc',
     description: ' ',
@@ -97,7 +70,7 @@ async function createLecture(id: string) {
           objectEditable: true,
           pictureeditable: true,
           soundeditable: true,
-          dataTableEnable: false,
+          dataTableEnable: true,
           sceneEditable: true,
           messageEnable: true,
           variableEnable: true,
@@ -119,17 +92,7 @@ async function createLecture(id: string) {
  * @param id 스터디의 id입니다.
  */
 async function getStudyProject(id: string) {
-  const { data } = await request('SELECT_LECTURE', `
-    query SELECT_LECTURE($id: ID!, $groupId: ID, $studentId: ID) {
-      lecture(id: $id, groupId: $groupId, studentId: $studentId) {
-        studies {
-          doneProject {
-            shortenUrl
-          }
-        }
-      }
-    }
-  `, { id })
+  const { data } = await request('SELECT_LECTURE', 'query SELECT_LECTURE($id:ID!,$groupId:ID,$studentId:ID){lecture(id:$id,groupId:$groupId,studentId:$studentId){studies{doneProject{shortenUrl}}}}', { id })
   return data.lecture.studies.map((project: { doneProject: any }) => project.doneProject)
 }
 
@@ -138,14 +101,7 @@ async function getStudyProject(id: string) {
  * @param id 작품의 id입니다.
  */
 async function deleteLecture(id: string) {
-  const { data } = await request('DELETE_LECTURE', `
-    mutation DELETE_LECTURE($id: ID!) {
-      deleteLecture(id: $id) {
-        status
-        result
-      }
-    }
-  `, { id })
+  const { data } = await request('DELETE_LECTURE', 'mutation DELETE_LECTURE($id:ID!){deleteLecture(id:$id){status,result}}', { id })
   return data.deleteLecture.result
 }
 
@@ -154,7 +110,7 @@ async function deleteLecture(id: string) {
  * @param id 작품의 id입니다.
  * @param onChangeStep 진행 단계가 변경될 때 호줄됩니다.
  */
-async function getShortenUrl(id: string, onChangeStep?: ChangeStopCallback) {
+async function getShortenUrl(id: string) {
   const userId = __NEXT_DATA__.props.pageProps.initialState.common.user?.id
   if (!userId) {
     alert('로그인 후 사용 가능합니다.')
@@ -162,18 +118,10 @@ async function getShortenUrl(id: string, onChangeStep?: ChangeStopCallback) {
   }
 
   const studyId: string = await createLecture(id)
-  onChangeStep?.('study', studyId)
-
   const [ project ] = await getStudyProject(studyId)
-  onChangeStep?.('project', project)
 
   deleteLecture(studyId)
   return project.shortenUrl
-}
-
-export interface ChangeStopCallback {
-  (step: 'study', id: string): void
-  (step: 'project', project: object): void
 }
 
 export default getShortenUrl

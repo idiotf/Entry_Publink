@@ -13,7 +13,7 @@ declare global {
 
 const shortenUrlButtons = new WeakSet<Element>
 const body = document.body
-if (body) new MutationObserver(() => next.router.pathname == '/project/[id]' && document.querySelectorAll('div.e7reuff0 ul').forEach(ul => {
+if (body) new MutationObserver(() => self.next && next.router.pathname == '/project/[id]' && document.querySelectorAll('div.e7reuff0 ul').forEach(ul => {
   // 가끔씩 버튼이 위로 올라올 때를 대비함
   const button = ul.querySelector('li:last-child')
   if (button && shortenUrlButtons.has(button)) return
